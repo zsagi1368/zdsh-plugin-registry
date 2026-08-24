@@ -1,43 +1,92 @@
-# zdsh-plugin-registry — 第一方插件注册表
+<h1 align="center">zdsh-plugin-registry</h1>
 
-zDSH 插件中心（`zsagi1368/zdsh-plugin-center`）的官方目录数据源。本仓只含**数据与准入规则**，不含可执行插件代码。
+<p align="center">
+  <a href="https://github.com/zsagi1368/zdsh-plugin-registry/actions/workflows/validate.yml"><img src="https://github.com/zsagi1368/zdsh-plugin-registry/actions/workflows/validate.yml/badge.svg" alt="validate"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-2563eb?style=flat-square" alt="License: MIT"></a>
+</p>
 
-## 数据文件
-
-| 文件 | 用途 |
-|---|---|
-| `catalog.json` | 可信安装目录：每个 GitHub 条目固定 40 位 commit、npm 条目固定精确 semver；插件端加载时校验 `catalog.json.sha256` 签名边车 |
-| `candidates.json` | 候选隔离池：**禁止出现** pinnedCommit / integrity / evidence / compat / scriptsPolicy 字段（CI 强制），必须经完整审核后才能晋级 |
-| `*.sha256` | sha256 边车；由 `node scripts/sign.mjs` 生成，任何改动后必须重新签署 |
-
-## 准入规则（catalog 晋级标准）
-
-1. 仓库公开存在，根目录含 `cordis.patch.yml`（或 npm 包声明 `dsh.bundle.patch`）；
-2. 安装目标固定到精确 commit/版本——永不接受浮动分支；
-3. `package.json` 生命周期脚本扫描通过：默认全拒，例外需显式 allowlist 并在 PR 中说明理由；
-4. 双语标题/摘要齐备，分类合规；
-5. 兼容性证据分三级：`exact`（在目标 DSH 版本实测）/ `range-supported`（声明范围覆盖）/ `unknown`（默认）；`recommended` 需维护者实测背书。
-
-## 提交方式
-
-- 开 Issue（模板：Plugin Submission）填仓库地址 → 维护者核验后手工/脚本晋级并签发新快照；
-- 或直接 PR 修改 `catalog.json` / `candidates.json` —— CI 会跑 `scripts/validate.mjs` 校验 schema、固定 commit 与签名一致性。
-
-## 刷新链路
-
-```
-编辑 catalog.json → node scripts/sign.mjs → CI validate → merge
-→ 插件端下次拉取 raw/catalog.json 时按 .sha256 验签 → fresh 缓存
-```
+<p align="center">
+  The first-party, signed plugin catalog powering the
+  <a href="https://github.com/zsagi1368/zdsh-plugin-center">zDSH Plugin Center</a>.<br>
+  Data only — no executable plugin code lives here.<br>
+  中文文档见 <a href="README.zh.md">README.zh.md</a>
+</p>
 
 ---
 
-## English summary
+## What this is
 
-First-party catalog for the zDSH Plugin Center. `catalog.json` holds pinned,
-verified installable entries; `candidates.json` is a quarantine pool that is
-schema-forbidden from carrying installable fields. Every document ships a
-sha256 sidecar the plugin verifies before trusting a remote snapshot.
-Promotion requires: public repo with a bundle patch manifest, exact
-commit/version pin, lifecycle-script scan (default deny), bilingual metadata.
-Submit via Issue template or PR — CI validates schema, pins and digests.
+Two JSON documents and their integrity sidecars:
+
+| File | Purpose |
+|---|---|
+| `catalog.json` | Installable entries. Every GitHub target is pinned to an exact 40-hex commit; npm targets to an exact semver. Shipped with a `catalog.json.sha256` sidecar that the Plugin Center verifies before trusting a remote snapshot. |
+| `candidates.json` | Quarantine pool for discovered-but-not-yet-reviewed projects. The schema **forbids** install-capable fields (`pinnedCommit`, `integritySha256`, `evidence`, `compat`, `scriptsPolicy`, `owner`, `repo`, `version`) — CI enforces it, so nothing here can be installed by accident. |
+
+## How verification works
+
+```
+edit catalog.json
+  → node scripts/sign.mjs        (canonicalize + write sha256 sidecar)
+  → CI: sign → git diff --exit-code → validate
+  → merge
+  → every Plugin Center deployment pulls raw/catalog.json,
+    checks it against catalog.json.sha256,
+    accepts it as "fresh" — or falls back to its digest-checked local cache
+```
+
+An unsigned or tampered snapshot can never promote an entry to `recommended`
+or relax a scripts policy: the client refuses documents whose digest does not
+match the sidecar.
+
+## Promotion rules
+
+A candidate enters `catalog.json` only after:
+
+1. The repository is public and carries a bundle-patch manifest
+   (`cordis.patch.yml` at the repo root, or an npm package declaring
+   `dsh.bundle.patch`);
+2. The install target is pinned to an exact commit / version — floating
+   branches are never accepted;
+3. A lifecycle-script scan passes: scripts are denied by default, exceptions
+   require an explicit allow-list justified in the PR;
+4. Bilingual (zh/en) title and summary are present, category is valid;
+5. Compatibility evidence is recorded as one of `exact` (tested against a
+   target DSH release) / `range-supported` (declared range covers it) /
+   `unknown` (default). `recommended` requires maintainer-tested endorsement.
+
+## Submitting a plugin
+
+- **Issue**: open a [Plugin Submission](https://github.com/zsagi1368/zdsh-plugin-registry/issues/new?template=plugin-submission.yml)
+  issue with the repository URL. A maintainer verifies the rules above and
+  promotes the entry with a freshly signed snapshot.
+- **Pull request**: edit `catalog.json` or `candidates.json` directly. CI runs
+  `scripts/validate.mjs` — a dependency-free mirror of the Plugin Center's
+  validation (charset-pinned names, 40-hex pins, bilingual text bounds, digest
+  freshness).
+
+## Consuming the catalog
+
+Point the Plugin Center at the signed snapshot:
+
+```yaml
+# Plugin Center configuration
+remoteCatalogUrl: https://raw.githubusercontent.com/zsagi1368/zdsh-plugin-registry/main/catalog.json
+```
+
+Loading is three-tier: verified remote → digest-checked local cache → bundled
+seed, degrading gracefully when offline.
+
+## Development
+
+```bash
+node scripts/sign.mjs       # canonicalize documents + refresh sha256 sidecars
+node scripts/validate.mjs   # full schema / pin / digest gate (no dependencies)
+```
+
+CI refuses any merge where signing would change files — a stale sidecar fails
+the build.
+
+## License
+
+[MIT](./LICENSE)
