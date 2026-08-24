@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "fetchedAt": "2026-08-24T00:00:00.000Z",
+  "entries": [
+    {
+      "id": "zhu1090093659/dsh-web-ui",
+      "originUrl": "https://github.com/zhu1090093659/dsh-web-ui",
+      "noteZh": "Web 插件全家桶 monorepo（18 包聚合）；仓库根无 cordis.patch.yml，需确认逐包安装形态后才能晋级。",
+      "noteEn": "Web plugin suite monorepo (18 aggregated packages); no root bundle patch, promotion requires a per-package install shape.",
+      "discoveredAt": "2026-08-24T00:00:00.000Z"
+    },
+    {
+      "id": "Ephemeral-AI-Lab/dsh-plugins",
+      "originUrl": "https://github.com/Ephemeral-AI-Lab/dsh-plugins",
+      "noteZh": "工具插件集合仓（codex-terminal/loop/mock/sessions 等）；子包各自带 patch，根目录无，需确定子包安装路径。",
+      "noteEn": "Utility plugin collection; sub-packages carry their own patches, root does not. Install path must be decided before promotion.",
+      "discoveredAt": "2026-08-24T00:00:00.000Z"
+    },
+    {
+      "id": "dsh-codex-terminal",
+      "originUrl": "https://www.npmjs.com/package/dsh-codex-terminal",
+      "noteZh": "npm 已发布的终端插件；待锁定精确版本与完整性摘要后晋级。",
+      "noteEn": "Published npm terminal plugin; promotion pending an exact version pin and integrity digest.",
+      "discoveredAt": "2026-08-24T00:00:00.000Z"
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+name: Plugin Submission
+description: 提交一个公开的 DSH 插件仓库进入候选池 / Submit a public DSH plugin repository for review
+title: "[Submit] <owner/repo>"
+labels: ["submission"]
+body:
+  - type: input
+    id: repo
+    attributes:
+      label: 仓库地址 / Repository URL
+      description: 公开 GitHub 仓库；根目录需含 cordis.patch.yml（或 npm 包声明 dsh.bundle.patch）
+      placeholder: https://github.com/<owner>/<repo>
+    validations:
+      required: true
+  - type: dropdown
+    id: source
+    attributes:
+      label: 安装来源 / Source
+      options:
+        - github
+        - npm
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: npm 包名（npm 来源必填）/ Package name if npm
+    validations:
+      required: false
+  - type: textarea
+    id: scripts
+    attributes:
+      label: 生命周期脚本说明 / Lifecycle scripts
+      description: 列出 package.json 中 preinstall/install/postinstall/prepare 等脚本及其用途；默认全拒，无豁免不予晋级
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: 补充说明 / Notes
+    validations:
+      required: false
